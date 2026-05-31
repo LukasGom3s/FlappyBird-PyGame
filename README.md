@@ -12,7 +12,7 @@ Este repositório é um template para os grupos da disciplina. A proposta é com
 - Nicolas Rodrigues Bessa de Almeida
 
 ## Tipo de Jogo
-Arcade / Endless Runner 2D (Progressão lateral contínua).
+Jogo de desviar de obstáculos com progressão lateral contínua e infinita.
 
 ## Estrutura do projeto
 
