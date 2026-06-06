@@ -6,8 +6,6 @@ TITULO_JOGO  = "Flappy Bird"
  
 AZUL_CEU = (78, 192, 202)
 
-TITULO_JOGO = "Projeto Final - Pygame"
-
 BRANCO = (255, 255, 255)
 PRETO = (0, 0, 0)
 CINZA = (212,212,212)
