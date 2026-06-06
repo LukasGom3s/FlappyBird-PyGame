@@ -1,7 +1,10 @@
 # Configurações centrais do jogo (tela, cores e caminhos de arquivos).
-LARGURA_TELA = 800
-ALTURA_TELA = 600
-FPS = 60
+LARGURA_TELA = 400
+ALTURA_TELA  = 600
+FPS          = 60
+TITULO_JOGO  = "Flappy Bird"
+ 
+AZUL_CEU = (78, 192, 202)
 
 TITULO_JOGO = "Projeto Final - Pygame"
 
