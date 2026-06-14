@@ -1,29 +1,50 @@
 import pygame
             
-def pegar_sprite(local_arquivo, x, y, width, height, scale=1):
-    """Corta um único elemento de uma spritesheet BMP e remove o fundo."""
-    
-    # 1. Carrega o BMP e usa .convert() (sem alpha) para otimizar a velocidade
-    sheet = pygame.image.load(local_arquivo).convert()
-
-    # 2. Cria uma superfície padrão para o recorte (não precisa de SRCALPHA aqui)
-    image = pygame.Surface((width, height))
-    
-    # 3. Copia o pedaço da folha BMP para a nossa nova imagem
-    image.blit(sheet, (0, 0), (x, y, width, height))
-    
-    # 4. CONFIGURAÇÃO DA TRANSPARÊNCIA (O segredo para o BMP)
-    # Pegamos a cor do pixel no canto superior esquerdo (0,0) do recorte, 
-    # assumindo que o fundo do seu sprite começa ali.
-    cor_do_fundo = image.get_at((0, 0))
-    
-    # Dizemos ao Pygame para ignorar essa cor específica na hora de desenhar
-    image.set_colorkey(cor_do_fundo)
-    
-    # 5. Aplica o redimensionamento, se houver
-    if scale != 1:
-        novo_largura = int(width * scale)
-        novo_altura = int(height * scale)
-        image = pygame.transform.scale(image, (novo_largura, novo_altura))
+class Passaro(pygame.sprite.Sprite):
+    def __init__(self, x, y, imagens):
+        super().__init__()
+        self.imagens = imagens
+        self.indice_imagem = 0
+        self.contador_animacao = 0
         
-    return image
+        self.image = self.imagens[self.indice_imagem]
+        self.rect = self.image.get_rect(topleft=(x, y))
+        
+        # Propriedades físicas
+        self.velocidade_y = 0
+        self.gravidade = 0.5
+        self.forca_pulo = -8
+        
+    def pular(self):
+        self.velocidade_y = self.forca_pulo
+        
+    def atualizar(self):
+        # Aplica gravidade
+        self.velocidade_y += self.gravidade
+        self.rect.y += self.velocidade_y
+        
+        # Atualiza animação
+        self.contador_animacao += 1
+        if self.contador_animacao >= 5:
+            self.contador_animacao = 0
+            self.indice_imagem += 1
+            if self.indice_imagem >= len(self.imagens):
+                self.indice_imagem = 0
+                
+        self.image = self.imagens[self.indice_imagem]
+
+
+class Cano(pygame.sprite.Sprite):
+    def __init__(self, x, y, imagem, de_cima=False):
+        super().__init__()
+        self.image = imagem
+        self.rect = self.image.get_rect()
+        
+        # Alinha o cano com base na sua orientação (teto ou chão)
+        if de_cima:
+            self.rect.bottomleft = (x, y)
+        else:
+            self.rect.topleft = (x, y)
+            
+    def atualizar(self, velocidade):
+        self.rect.x -= velocidade
