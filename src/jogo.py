@@ -1,12 +1,19 @@
+import os
 import pygame
  
-from .config import (LARGURA_TELA, ALTURA_TELA, FPS, TITULO_JANELA)
-from .funcoes import verificar_colisao, limitar_valor, gerar_alturas_canos, carregar_imagens
+from .config import (LARGURA_TELA, ALTURA_TELA, FPS, TITULO_JANELA, CAMINHO_RECORDE)
+from .funcoes import (verificar_colisao, gerar_alturas_canos, carregar_imagens, calcular_pontos, tomar_dano, jogador_perdeu)
+from .dados import carregar_recorde, salvar_recorde
 from .sprites import Passaro, Cano
  
 def executar_jogo():
     pygame.init()
     pygame.font.init() # Adiciona uma fonte para mensagem de Game Over
+
+    # Garante que a pasta de dados exista para evitar erro ao salvar o recorde
+    diretorio_dados = os.path.dirname(CAMINHO_RECORDE)
+    if diretorio_dados and not os.path.exists(diretorio_dados):
+        os.makedirs(diretorio_dados)
  
     tela = pygame.display.set_mode((LARGURA_TELA, ALTURA_TELA))
     pygame.display.set_caption(TITULO_JANELA)
@@ -36,8 +43,12 @@ def executar_jogo():
     # Inicialização das entidades
     passaro = Passaro(50, ALTURA_TELA // 4, imagens['passaro'])
 
-    # TODO: PONTUAÇÃO E VIDAS - Inicializar as variáveis de pontos e quantidade de vidas aqui antes do loop começar.
-    # TODO: LER RECORDE - Importar e usar a função `carregar_recorde()` do arquivo src/dados.py para ler o arquivo recorde.txt e guardar o valor numa variável.
+    # Sistema de pontuação, vidas e timer
+    pontos = 0
+    vidas = 3
+    tempo_segundos = 0
+    tempo_inicio_partida = 0
+    recorde = carregar_recorde(CAMINHO_RECORDE)
 
     altura_cano_cima, altura_cano_baixo = gerar_alturas_canos(ALTURA_TELA, chao_altura, espaco_entre_canos)
 
@@ -58,10 +69,13 @@ def executar_jogo():
         for evento in pygame.event.get():
             if evento.type == pygame.QUIT:
                 rodando = False
+            if evento.type == pygame.KEYDOWN and evento.key == pygame.K_ESCAPE:
+                rodando = False
             if evento.type == pygame.KEYDOWN and evento.key == pygame.K_SPACE:
                 # A tela quando alguem acabar de abrir o jogo
                 if estado_jogo == "INICIO":
                     passaro.pular()
+                    tempo_inicio_partida = pygame.time.get_ticks()
                     estado_jogo = "JOGANDO"
                 elif estado_jogo == "JOGANDO":
                     passaro.pular()
@@ -73,10 +87,15 @@ def executar_jogo():
                     altura_cano_cima, altura_cano_baixo = gerar_alturas_canos(ALTURA_TELA, chao_altura, espaco_entre_canos)
                     cano_cima = Cano(cano_x, altura_cano_cima, imagens['cano'], de_cima=True)
                     cano_baixo = Cano(cano_x, chao_y - altura_cano_baixo, imagens['cano'], de_cima=False)
+                    pontos = 0
+                    vidas = 3
+                    tempo_inicio_partida = pygame.time.get_ticks()
                     estado_jogo = "JOGANDO"
 
             # As coisas vão se mover
         if estado_jogo == "JOGANDO":
+            tempo_segundos = (pygame.time.get_ticks() - tempo_inicio_partida) // 1000
+
             # Passarinho
             passaro.atualizar()
 
@@ -92,27 +111,36 @@ def executar_jogo():
                 cano_cima = Cano(cano_x, altura_cano_cima, imagens['cano'], de_cima=True)
                 cano_baixo = Cano(cano_x, chao_y - altura_cano_baixo, imagens['cano'], de_cima=False)
             
-                # TODO: MARCAR PONTO - Se os canos saíram da tela, significa que o pássaro passou por eles. Somar +1 ponto aqui!
+                pontos = calcular_pontos(pontos, 1)
             
-                # Atualização do chão em loop dinâmico
+            # Atualização do movimento do chão
             chao_x -= cano_velocidade
             if chao_x <= -LARGURA_TELA:
                 chao_x = 0
             
-        # Verificação de colisões pra fazer o Game Over
-        bateu_no_chao = verificar_colisao(passaro.rect, chao_rect)
-        bateu_no_teto = passaro.rect.top <= 0
-        bateu_no_cano = verificar_colisao(passaro.rect, cano_cima.rect) or verificar_colisao(passaro.rect, cano_baixo.rect)
-        
-        if bateu_no_chao or bateu_no_teto or bateu_no_cano:
-            if bateu_no_chao:
-                passaro.rect.bottom = chao_rect.top
+            # Verificação de colisões
+            bateu_no_chao = verificar_colisao(passaro.rect, chao_rect)
+            bateu_no_teto = passaro.rect.top <= 0
+            bateu_no_cano = verificar_colisao(passaro.rect, cano_cima.rect) or verificar_colisao(passaro.rect, cano_baixo.rect)
+            
+            if bateu_no_chao or bateu_no_teto or bateu_no_cano:
+                vidas = tomar_dano(vidas, 1)
 
-            #O loop/jogo vai para de rodar/mexer
-            estado_jogo = "GAME_OVER"
-
-            # TODO: PERDA DE VIDA
-            # TODO: SALVER O RECORDE
+                if jogador_perdeu(vidas):
+                    if bateu_no_chao:
+                        passaro.rect.bottom = chao_rect.top
+                    estado_jogo = "GAME_OVER"
+                    if pontos > recorde:
+                        recorde = pontos
+                        salvar_recorde(CAMINHO_RECORDE, recorde)
+                else:
+                    # Resetar posição para continuar com a próxima vida
+                    passaro.rect.y = ALTURA_TELA // 4
+                    passaro.velocidade_y = 0
+                    cano_x = LARGURA_TELA
+                    cano_cima = Cano(cano_x, altura_cano_cima, imagens['cano'], de_cima=True)
+                    cano_baixo = Cano(cano_x, chao_y - altura_cano_baixo, imagens['cano'], de_cima=False)
+                    tempo_inicio_partida = pygame.time.get_ticks()
 
         # Renderização
         tela.blit(imagem_fundo, (0, 0))
@@ -124,7 +152,18 @@ def executar_jogo():
         tela.blit(imagem_chao, (chao_x, chao_y))
         tela.blit(imagem_chao, (chao_x + LARGURA_TELA, chao_y))
  
-        # TODO: INTERFACE E TEXTOS - Renderizar e desenhar os textos na tela (ex: vidas, pontuação e recorde) aqui no final, por cima de todo o resto.
+        # Renderização da interface (HUD)
+        texto_pontos = fonte_instrucoes.render(f"Pontos: {pontos}", True, (255, 255, 255))
+        texto_recorde = fonte_instrucoes.render(f"Recorde: {recorde}", True, (255, 255, 0))
+        texto_timer = fonte_instrucoes.render(f"Tempo: {tempo_segundos}s", True, (255, 255, 255))
+        
+        tela.blit(texto_pontos, (20, 20))
+        tela.blit(texto_recorde, (20, 50))
+        tela.blit(texto_timer, (LARGURA_TELA - 160, 20))
+
+        # Desenha os corações das vidas
+        for i in range(vidas):
+            tela.blit(imagens['coracao'], (LARGURA_TELA - 40 - (i * 35), 60))
 
         # A mensagem depois de colidir/morrer
         if estado_jogo == "GAME_OVER":
