@@ -1,6 +1,6 @@
 # Assets
 
-Esta pasta centraliza os recursos visuais e sonoros do jogo.
+Esta pasta centraliza os recursos visuais e sonoros do jogo, adquiridos de bibliotecas gratuitas na internet.
 
 ## Organização
 

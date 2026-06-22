@@ -1,6 +1,6 @@
 # Imagens
 
-Pasta destinada a sprites, fundos, icones e outros elementos visuais.
+Pasta destinada a sprites, fundos, icones e outros elementos visuais. Adquiridos de forma gratuita pela internet ou criados por nós mesmos.
 
 ## Conteudo atual
 

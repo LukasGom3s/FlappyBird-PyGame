@@ -40,14 +40,13 @@ Regras do grupo:
 - Regra 1: O personagem é constantemente puxado para baixo pela gravidade.
 - Regra 2: O comando do jogador faz o personagem dar um pequeno salto, ganhando altitude.
 - Regra 3: Passar com sucesso por um par de obstáculos concede 1 ponto ao jogador.
-- Regra 4: O espaço (fresta) entre os obstáculos superior e inferior varia em altura.
-- Regra 5: Bater em qualquer obstáculo ou no chão encerra a partida imediatamente.
+- Regra 4: Bater em qualquer obstáculo ou no chão encerra a partida imediatamente.
 
 ## 7. Condição de vitória
 
 Condição de vitória:
 
-> Por ser um jogo de sobrevivência infinita, não há uma tela de "Você Venceu". A vitória do jogador consiste em sobreviver o suficiente para quebrar o seu próprio recorde.
+> Por ser um jogo de sobrevivência infinita, não há uma tela de "Você Venceu". A vitória do jogador consiste em sobreviver o suficiente para quebrar o seu próprio recorde anterior.
 
 ## 8. Condição de derrota ou encerramento
 
@@ -61,19 +60,19 @@ Condição de derrota ou encerramento:
 
 Descrição:
 
-> Um pássaro (com física de gravidade) controlado por um único botão para pular.
+> Um pássaro (com física de gravidade), com o qual você pode usar o botão esquerdo do mouse, a tecla espaço ou as setinhas do teclado para pular, movimentando ele um pouco para cima. 
 
 ## Obstáculos, inimigos ou desafios
 
 Descrição:
 
-> Colunas/canos gerados em pares (um descendo do teto, outro subindo do chão), com espaçamentos seguros gerados aleatoriamente. 
+> Colunas/canos gerados em pares (um vindo do teto e outro do chão), os quais começam a vir mais rapidamente na direção do jogador com o passar o tempo. 
 
 ## Itens, alvos ou objetos de interação
 
 Descrição:
 
-> Não haverá coleta de itens. A interação se dá puramente pelas frestas invisíveis entre os obstáculos, que ativam a pontuação ao serem cruzadas.
+> Não haverá coleta de itens. A interação se dá puramente pelas frestas entre os obstáculos, que ativam o registro de pontuação ao serem cruzadas.
 
 ## Pontuação, vidas, tempo ou progresso
 
@@ -99,13 +98,14 @@ Organização planejada:
 > - `src/sprites.py`: contém as classes do personagem e dos canos;
 > - `src/config.py`: guarda configurações como tamanho da tela, gravidade e cores;
 > - `data/`: pasta para armazenar o arquivo de recorde de pontuação;
+> - `src/dados.py`: gerencia o armazenamento de recordes;
 > - `assets/`: pasta para armazenar imagens e sons.
 
 ## 12. Recursos externos previstos
 
 Recursos previstos:
 
-> - Imagens e *sprites* obtidos de bancos gratuitos voltados para *pixel art* ou *assets* de jogos (estilo Flappy Bird).
+> - Imagens e *sprites* obtidos de bancos gratuitos voltados para *pixel art*, *assets* de jogos (estilo Flappy Bird) e Sprites pessoais feitos por membros do grupo.
 > - Efeitos sonoros gratuitos para pulo, marcação de ponto e colisão.
 > - Fontes personalizadas para exibição de texto retro/arcade.
 
@@ -114,8 +114,8 @@ Recursos previstos:
 Dificuldades previstas:
 
 - Dificuldade 1: Implementar uma gravidade e pulo que pareçam fluídos e respondam bem aos comandos.
-- Dificuldade 2: Lógica de geração procedural para garantir que os canos apareçam de forma aleatória, mas sempre com um espaço perfeitamente transponível.
-- Dificuldade 3: Ajuste preciso das hitboxes para não gerar "mortes injustas".
+- Dificuldade 2: Lógica de geração procedural para garantir que os canos apareçam com um espaço ultrapassável.
+- Dificuldade 3: Ajuste preciso das hitboxes para não gerar mortes injustas.
 
 ## 14. Escopo mínimo para a entrega final
 
@@ -127,6 +127,6 @@ Escopo mínimo:
 
 Melhorias possíveis:
 
-- Melhoria 1: Implementar sistema persistente de *High Score* salvando e lendo a partir de um arquivo externo (`.txt` ou `.json`).
-- Melhoria 2: Animação do pássaro batendo as asas (troca de *sprites*).
-- Melhoria 3: Menus estilizados (Tela Inicial e Tela de *Game Over*) com efeitos sonoros e fundo com movimento (*parallax*).
+- Melhoria 1: Implementar sistema persistente de *High Score* salvando e lendo a partir de um arquivo externo (`.txt` ou `.json`). ( FEITO )
+- Melhoria 2: Animação do pássaro batendo as asas (troca de *sprites*). ( FEITO )
+- Melhoria 3: Menus estilizados (Tela Inicial e Tela de *Game Over*). ( FEITO )
