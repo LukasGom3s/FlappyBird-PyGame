@@ -33,6 +33,7 @@ def executar_jogo():
 
     fonte_game_over = pygame.font.SysFont('arial', 50, bold=True)
     fonte_instrucoes = pygame.font.SysFont('arial', 30)
+    fonte_menu = pygame.font.SysFont('arial', 40, bold=True)  # fonte do menu
 
     # Configurações dos canos
     cano_largura = 80
@@ -70,7 +71,9 @@ def executar_jogo():
 
     canos = reiniciar_canos()
 
-    estado_jogo = "INICIO"
+    estado_jogo = "MENU"  # começa no menu agora
+    opcao_menu = 0        # 0 = Jogar, 1 = Ranking, 2 = Sair
+    em_ranking = False
 
     rodando = True
     while rodando:
@@ -80,24 +83,97 @@ def executar_jogo():
         for evento in pygame.event.get():
             if evento.type == pygame.QUIT:
                 rodando = False
-            if evento.type == pygame.KEYDOWN and evento.key == pygame.K_ESCAPE:
-                rodando = False
-            if evento.type == pygame.KEYDOWN and evento.key == pygame.K_SPACE:
-                if estado_jogo == "INICIO":
-                    passaro.pular()
-                    tempo_inicio_partida = pygame.time.get_ticks()
-                    estado_jogo = "JOGANDO"
+
+            # Mouse
+            if estado_jogo == "MENU" and not em_ranking:
+                opcoes_mouse = ["JOGAR", "RANKING", "SAIR"]
+                
+                # Movimento do mouse
+                if evento.type == pygame.MOUSEMOTION:
+                    for i, texto in enumerate(opcoes_mouse):
+                        largura, altura = fonte_menu.size(texto)
+                        rect_x = LARGURA_TELA // 2 - largura // 2
+                        rect_y = ALTURA_TELA // 2 - 60 + i * 70
+                        rect_opcao = pygame.Rect(rect_x, rect_y, largura, altura)
+                        
+                        if rect_opcao.collidepoint(evento.pos):
+                            opcao_menu = i
+
+                # Clique do mouse
+                elif evento.type == pygame.MOUSEBUTTONDOWN and evento.button == 1:
+                    for i, texto in enumerate(opcoes_mouse):
+                        largura, altura = fonte_menu.size(texto)
+                        rect_x = LARGURA_TELA // 2 - largura // 2
+                        rect_y = ALTURA_TELA // 2 - 60 + i * 70
+                        rect_opcao = pygame.Rect(rect_x, rect_y, largura, altura)
+                        
+                        if rect_opcao.collidepoint(evento.pos):
+                            if i == 0:  # Jogar
+                                passaro.rect.y = ALTURA_TELA // 4
+                                passaro.velocidade_y = 0
+                                canos = reiniciar_canos()
+                                cano_velocidade = VELOCIDADE_INICIAL
+                                pontos = 0
+                                vidas = 3
+                                estado_jogo = "INICIO"
+                            elif i == 1:  # Ranking
+                                em_ranking = True
+                            elif i == 2:  # Sair
+                                rodando = False
+            # -----------------------------------------------
+
+            if evento.type == pygame.KEYDOWN:
+                if estado_jogo == "MENU":
+                    if em_ranking:
+                        if evento.key in (pygame.K_SPACE, pygame.K_RETURN, pygame.K_ESCAPE):
+                            em_ranking = False
+                    else:
+                        if evento.key == pygame.K_UP:
+                            opcao_menu = (opcao_menu - 1) % 3
+                        elif evento.key == pygame.K_DOWN:
+                            opcao_menu = (opcao_menu + 1) % 3
+                        elif evento.key in (pygame.K_RETURN, pygame.K_SPACE):
+                            if opcao_menu == 0:  # Jogar
+                                passaro.rect.y = ALTURA_TELA // 4
+                                passaro.velocidade_y = 0
+                                canos = reiniciar_canos()
+                                cano_velocidade = VELOCIDADE_INICIAL
+                                pontos = 0
+                                vidas = 3
+                                estado_jogo = "INICIO"
+                            elif opcao_menu == 1:  # Ranking
+                                em_ranking = True
+                            elif opcao_menu == 2:  # Sair
+                                rodando = False
+                        elif evento.key == pygame.K_ESCAPE:
+                            rodando = False
+
+                elif estado_jogo == "INICIO":
+                    if evento.key == pygame.K_SPACE:
+                        passaro.pular()
+                        tempo_inicio_partida = pygame.time.get_ticks()
+                        estado_jogo = "JOGANDO"
+                    elif evento.key == pygame.K_ESCAPE:
+                        estado_jogo = "MENU"
+
                 elif estado_jogo == "JOGANDO":
-                    passaro.pular()
+                    if evento.key == pygame.K_SPACE:
+                        passaro.pular()
+                    elif evento.key == pygame.K_ESCAPE:
+                        estado_jogo = "MENU"
+
                 elif estado_jogo == "GAME_OVER":
-                    passaro.rect.y = ALTURA_TELA // 4
-                    passaro.velocidade_y = 0
-                    canos = reiniciar_canos()
-                    cano_velocidade = VELOCIDADE_INICIAL
-                    pontos = 0
-                    vidas = 3
-                    tempo_inicio_partida = pygame.time.get_ticks()
-                    estado_jogo = "JOGANDO"
+                    if evento.key == pygame.K_SPACE:
+                        passaro.rect.y = ALTURA_TELA // 4
+                        passaro.velocidade_y = 0
+                        canos = reiniciar_canos()
+                        cano_velocidade = VELOCIDADE_INICIAL
+                        pontos = 0
+                        vidas = 3
+                        tempo_inicio_partida = pygame.time.get_ticks()
+                        estado_jogo = "JOGANDO"
+                    elif evento.key == pygame.K_ESCAPE:
+                        estado_jogo = "MENU"
 
         if estado_jogo == "JOGANDO":
             tempo_segundos = (pygame.time.get_ticks() - tempo_inicio_partida) // 1000
@@ -162,37 +238,55 @@ def executar_jogo():
         # Renderização
         tela.blit(imagens['fundo'], (0, 0))
 
-        tela.blit(passaro.image, passaro.rect)
-        for par in canos:
-            tela.blit(par["cima"].image, par["cima"].rect)
-            tela.blit(par["baixo"].image, par["baixo"].rect)
+        if estado_jogo == "MENU":
+            if em_ranking:
+                texto_ranking = fonte_game_over.render("RANKING", True, (255, 255, 0))
+                texto_recorde_val = fonte_game_over.render(f"Recorde: {recorde}", True, (255, 255, 255))
+                texto_voltar = fonte_instrucoes.render("ESC ou ESPAÇO para voltar", True, (200, 200, 200))
+                tela.blit(texto_ranking,     (LARGURA_TELA // 2 - texto_ranking.get_width()     // 2, ALTURA_TELA // 2 - 100))
+                tela.blit(texto_recorde_val, (LARGURA_TELA // 2 - texto_recorde_val.get_width() // 2, ALTURA_TELA // 2))
+                tela.blit(texto_voltar,      (LARGURA_TELA // 2 - texto_voltar.get_width()      // 2, ALTURA_TELA // 2 + 80))
+            else:
+                opcoes = ["JOGAR", "RANKING", "SAIR"]
+                titulo = fonte_game_over.render("FLAPPY BIRD", True, (255, 255, 0))
+                tela.blit(titulo, (LARGURA_TELA // 2 - titulo.get_width() // 2, ALTURA_TELA // 2 - 160))
+                for i, texto in enumerate(opcoes):
+                    cor = (255, 255, 0) if i == opcao_menu else (255, 255, 255)
+                    superficie = fonte_menu.render(texto, True, cor)
+                    tela.blit(superficie, (LARGURA_TELA // 2 - superficie.get_width() // 2, ALTURA_TELA // 2 - 60 + i * 70))
 
-        tela.blit(imagens['chao'], (chao_x, chao_y))
-        tela.blit(imagens['chao'], (chao_x + LARGURA_TELA, chao_y))
+        else:
+            tela.blit(passaro.image, passaro.rect)
+            for par in canos:
+                tela.blit(par["cima"].image, par["cima"].rect)
+                tela.blit(par["baixo"].image, par["baixo"].rect)
 
-        # HUD
-        texto_pontos = fonte_instrucoes.render(f"Pontos: {pontos}", True, (255, 255, 255))
-        texto_recorde = fonte_instrucoes.render(f"Recorde: {recorde}", True, (255, 255, 0))
-        texto_timer = fonte_instrucoes.render(f"Tempo: {tempo_segundos}s", True, (255, 255, 255))
+            tela.blit(imagens['chao'], (chao_x, chao_y))
+            tela.blit(imagens['chao'], (chao_x + LARGURA_TELA, chao_y))
 
-        tela.blit(texto_pontos, (20, 20))
-        tela.blit(texto_recorde, (20, 50))
-        tela.blit(texto_timer, (LARGURA_TELA - 160, 20))
+            # HUD
+            texto_pontos = fonte_instrucoes.render(f"Pontos: {pontos}", True, (255, 255, 255))
+            texto_recorde = fonte_instrucoes.render(f"Recorde: {recorde}", True, (255, 255, 0))
+            texto_timer = fonte_instrucoes.render(f"Tempo: {tempo_segundos}s", True, (255, 255, 255))
 
-        for i in range(vidas):
-            tela.blit(imagens['coracao'], (LARGURA_TELA - 40 - (i * 35), 60))
+            tela.blit(texto_pontos, (20, 20))
+            tela.blit(texto_recorde, (20, 50))
+            tela.blit(texto_timer, (LARGURA_TELA - 160, 20))
 
-        if estado_jogo == "GAME_OVER":
-            texto_morte = fonte_game_over.render("GAME OVER!", True, (255, 50, 50))
-            texto_reiniciar = fonte_instrucoes.render("Aperte a tecla ESPAÇO para tentar de novo!", True, (255, 255, 255))
-            tela.blit(texto_morte, (LARGURA_TELA // 2 - texto_morte.get_width() // 2, ALTURA_TELA // 2 - 50))
-            tela.blit(texto_reiniciar, (LARGURA_TELA // 2 - texto_reiniciar.get_width() // 2, ALTURA_TELA // 2 + 20))
+            for i in range(vidas):
+                tela.blit(imagens['coracao'], (LARGURA_TELA - 40 - (i * 35), 60))
 
-        if estado_jogo == "INICIO":
-            texto_inicio = fonte_game_over.render("FLAPPY BIRD", True, (255, 255, 255))
-            texto_instrucao = fonte_instrucoes.render("Aperte a tecla ESPAÇO para começar", True, (255, 255, 0))
-            tela.blit(texto_inicio, (LARGURA_TELA // 2 - texto_inicio.get_width() // 2, ALTURA_TELA // 2 - 60))
-            tela.blit(texto_instrucao, (LARGURA_TELA // 2 - texto_instrucao.get_width() // 2, ALTURA_TELA // 2 + 10))
+            if estado_jogo == "GAME_OVER":
+                texto_morte = fonte_game_over.render("GAME OVER!", True, (255, 50, 50))
+                texto_reiniciar = fonte_instrucoes.render("Aperte a tecla ESPAÇO para tentar de novo!", True, (255, 255, 255))
+                tela.blit(texto_morte, (LARGURA_TELA // 2 - texto_morte.get_width() // 2, ALTURA_TELA // 2 - 50))
+                tela.blit(texto_reiniciar, (LARGURA_TELA // 2 - texto_reiniciar.get_width() // 2, ALTURA_TELA // 2 + 20))
+
+            if estado_jogo == "INICIO":
+                texto_inicio = fonte_game_over.render("FLAPPY BIRD", True, (255, 255, 255))
+                texto_instrucao = fonte_instrucoes.render("Aperte a tecla ESPAÇO para começar", True, (255, 255, 0))
+                tela.blit(texto_inicio, (LARGURA_TELA // 2 - texto_inicio.get_width() // 2, ALTURA_TELA // 2 - 60))
+                tela.blit(texto_instrucao, (LARGURA_TELA // 2 - texto_instrucao.get_width() // 2, ALTURA_TELA // 2 + 10))
 
         pygame.display.flip()
 

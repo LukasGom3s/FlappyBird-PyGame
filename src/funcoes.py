@@ -62,6 +62,10 @@ def carregar_imagens(chao_altura, cano_largura):
     img_b2 = pygame.image.load("assets/imagens/B2.png").convert_alpha()
     img_b3 = pygame.image.load("assets/imagens/B3.png").convert_alpha()
     imagens['passaro'] = [img_b1, img_b2, img_b3, img_b2]
+
+    coracao = pygame.image.load("assets/imagens/heart.png").convert()
+    coracao.set_colorkey(coracao.get_at((0, 0)))
+    imagens['coracao'] = pygame.transform.scale(coracao, (30, 30))
     
     # Usamos .convert() e pegamos a cor do pixel (0,0) para garantir a transparência
     coracao = pygame.image.load("assets/imagens/heart.png").convert()
