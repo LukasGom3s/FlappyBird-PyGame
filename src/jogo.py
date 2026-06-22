@@ -22,7 +22,11 @@ def criar_par_canos(x, altura_tela, chao_y, chao_altura, espaco_entre_canos, ima
 
 def executar_jogo():
     pygame.init()
+    pygame.mixer.init()
     pygame.font.init()
+    som_pulo = pygame.mixer.Sound("assets/sons/som_pulo.mp3")
+    som_ponto = pygame.mixer.Sound("assets/sons/som_ponto.mp3")
+    som_gameover = pygame.mixer.Sound("assets/sons/som_gameover.mp3")
 
     diretorio_dados = os.path.dirname(CAMINHO_RECORDE)
     if diretorio_dados and not os.path.exists(diretorio_dados):
@@ -59,6 +63,8 @@ def executar_jogo():
     tempo_segundos = 0
     tempo_inicio_partida = 0
     recorde = carregar_recorde(CAMINHO_RECORDE)
+    novo_recorde = False
+
 
     def reiniciar_canos():
         """Cria a lista inicial de canos, já espaçados horizontalmente pela tela."""
@@ -151,6 +157,7 @@ def executar_jogo():
                 elif estado_jogo == "INICIO":
                     if evento.key == pygame.K_SPACE:
                         passaro.pular()
+                        som_pulo.play()
                         tempo_inicio_partida = pygame.time.get_ticks()
                         estado_jogo = "JOGANDO"
                     elif evento.key == pygame.K_ESCAPE:
@@ -159,6 +166,7 @@ def executar_jogo():
                 elif estado_jogo == "JOGANDO":
                     if evento.key == pygame.K_SPACE:
                         passaro.pular()
+                        som_pulo.play()
                     elif evento.key == pygame.K_ESCAPE:
                         estado_jogo = "MENU"
 
@@ -210,6 +218,7 @@ def executar_jogo():
                 if not par["pontuado"] and par["cima"].rect.right < passaro.rect.left:
                     pontos = calcular_pontos(pontos, 1)
                     par["pontuado"] = True
+                    som_ponto.play()
 
             # Verificação de colisões
             bateu_no_chao = verificar_colisao(passaro.rect, chao_rect)
@@ -220,14 +229,17 @@ def executar_jogo():
             )
 
             if bateu_no_chao or bateu_no_teto or bateu_no_cano:
+                som_gameover.play()
                 vidas = tomar_dano(vidas, 1)
 
                 if jogador_perdeu(vidas):
                     if bateu_no_chao:
                         passaro.rect.bottom = chao_rect.top
                     estado_jogo = "GAME_OVER"
+                    som_gameover.play()
                     if pontos > recorde:
                         recorde = pontos
+                        novo_recorde = True
                         salvar_recorde(CAMINHO_RECORDE, recorde)
                 else:
                     passaro.rect.y = ALTURA_TELA // 4
@@ -277,10 +289,27 @@ def executar_jogo():
                 tela.blit(imagens['coracao'], (LARGURA_TELA - 40 - (i * 35), 60))
 
             if estado_jogo == "GAME_OVER":
+                overlay = pygame.Surface((LARGURA_TELA, ALTURA_TELA))
+                overlay.set_alpha(180)
+                overlay.fill((0,0,0))
+                tela.blit(overlay,(0,0))
+
+                caixa = pygame.Rect(LARGURA_TELA//2-320, ALTURA_TELA//2-150, 640, 300)
+                pygame.draw.rect(tela,(40,40,40),caixa,border_radius=15)
+                pygame.draw.rect(tela,(255,255,255),caixa,3,border_radius=15)
+
                 texto_morte = fonte_game_over.render("GAME OVER!", True, (255, 50, 50))
-                texto_reiniciar = fonte_instrucoes.render("Aperte a tecla ESPAÇO para tentar de novo!", True, (255, 255, 255))
-                tela.blit(texto_morte, (LARGURA_TELA // 2 - texto_morte.get_width() // 2, ALTURA_TELA // 2 - 50))
-                tela.blit(texto_reiniciar, (LARGURA_TELA // 2 - texto_reiniciar.get_width() // 2, ALTURA_TELA // 2 + 20))
+                texto_pts = fonte_instrucoes.render(f"Pontos: {pontos}", True, (255,255,255))
+                texto_rec = fonte_instrucoes.render(f"Recorde: {recorde}", True, (255,255,0))
+                texto_reiniciar = fonte_instrucoes.render("ESPACO = jogar novamente | ESC = menu", True, (255,255,255))
+
+                tela.blit(texto_morte,(LARGURA_TELA//2-texto_morte.get_width()//2, ALTURA_TELA//2-120))
+                tela.blit(texto_pts,(LARGURA_TELA//2-texto_pts.get_width()//2, ALTURA_TELA//2-40))
+                tela.blit(texto_rec,(LARGURA_TELA//2-texto_rec.get_width()//2, ALTURA_TELA//2))
+                if novo_recorde:
+                    nr = fonte_instrucoes.render("NOVO RECORDE!", True, (255,215,0))
+                    tela.blit(nr,(LARGURA_TELA//2-nr.get_width()//2, ALTURA_TELA//2+40))
+                tela.blit(texto_reiniciar,(LARGURA_TELA//2-texto_reiniciar.get_width()//2, ALTURA_TELA//2+90))
 
             if estado_jogo == "INICIO":
                 texto_inicio = fonte_game_over.render("FLAPPY BIRD", True, (255, 255, 255))
